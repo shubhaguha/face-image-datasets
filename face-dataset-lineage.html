@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Dataset Lineage Map</title>
+<style>
+.viz-root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11,11,11,0.10);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --neutral: #898781;
+  --band: rgba(11,11,11,0.025);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+    --band: rgba(255,255,255,0.03);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.viz-root { background: var(--page); color: var(--text-primary); min-height: 100vh; padding: 28px 28px 72px; }
+header { max-width: 1400px; margin: 0 auto 18px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
+.lede { color: var(--text-secondary); font-size: 14.5px; line-height: 1.5; max-width: 820px; margin: 0; }
+.lede b { color: var(--text-primary); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 16px 0 0; font-size: 12.5px; color: var(--text-secondary); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 14px; height: 14px; border-radius: 4px; border: 2px solid; display: inline-block; }
+.ln { width: 26px; height: 0; border-top: 1.75px solid var(--muted); display: inline-block; }
+.ln.dash { border-top-style: dashed; }
+.box-dash { width: 18px; height: 12px; border: 1.75px dashed var(--text-secondary); border-radius: 3px; display: inline-block; }
+.layout { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; align-items: start; }
+@media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; min-width: 0; }
+.chart { padding: 10px; overflow: hidden; }
+svg { display: block; width: 100%; height: auto; }
+.lane-band { fill: var(--band); }
+.lane-label { font-size: 11px; fill: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+.edge { fill: none; stroke: var(--muted); stroke-width: 1.6; transition: opacity .15s, stroke .15s; }
+.edge.partial { stroke-dasharray: 5 4; }
+.edge-label { font-size: 10.5px; fill: var(--muted); }
+.node { cursor: pointer; transition: opacity .15s; outline: none; }
+.node rect.body { stroke-width: 2; }
+.node.withdrawn rect.body { stroke-dasharray: 6 4; }
+.node .name { font-size: 13px; font-weight: 600; fill: var(--text-primary); }
+.node .sub { font-size: 10.5px; fill: var(--text-secondary); }
+.node .hit { fill: transparent; }
+.node:focus-visible rect.body, .node.pinned rect.body { stroke-width: 3; }
+svg.focusing .node.dim, svg.focusing .edge.dim, svg.focusing .edge-label.dim { opacity: 0.16; }
+svg.focusing .edge.on { stroke: var(--text-secondary); stroke-width: 2.2; }
+.panel { padding: 18px 18px 16px; position: sticky; top: 16px; }
+.panel .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; margin: 12px 0 3px; }
+.panel h2 { font-size: 19px; margin: 0 0 2px; font-weight: 600; }
+.panel .full { color: var(--text-secondary); font-size: 12.5px; margin: 0 0 8px; }
+.panel p { margin: 0; font-size: 13px; line-height: 1.45; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); margin: 2px 4px 2px 0; color: var(--text-primary); }
+.chip i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.chain { font-size: 13px; line-height: 1.6; }
+.chain a { color: inherit; }
+.links { margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; }
+.links a { color: var(--series-1); text-decoration: none; font-weight: 600; }
+.links a:hover { text-decoration: underline; }
+.hint { color: var(--muted); font-size: 13px; line-height: 1.5; }
+details.table { max-width: 1400px; margin: 18px auto 0; padding: 12px 16px; }
+details.table summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 10px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--text-secondary); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+td a { color: var(--series-1); }
+.foot { max-width: 1400px; margin: 14px auto 0; font-size: 12px; color: var(--muted); }
+@media print {
+  .viz-root { padding: 10mm; min-height: 0; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .panel { display: none; }
+  details.table { break-before: page; }
+  details.table > *:not(summary) { display: block; }
+  @page { size: A4 landscape; margin: 8mm; }
+}
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <header>
+    <h1>Shared provenance of face datasets</h1>
+    <p class="lede">Each line shows where a dataset's <b>images</b> came from. 21 of the 34 entries take their images from another dataset, and LFW alone has <b>20 known derivatives</b>, shown here as 5 individual datasets and 2 groups. <b>Six datasets have been withdrawn (dashed borders), and derivatives of four of those are still distributed.</b> RFW, BFW and LAOFIW take only their names from LFW: none of them contains LFW images. Hover or tap a dataset to trace its lineage.</p>
+    <div class="legend" aria-label="Legend">
+      <span><i class="sw" style="border-color:var(--series-1);background:color-mix(in srgb,var(--series-1) 14%,transparent)"></i>Flickr (Creative Commons)</span>
+      <span><i class="sw" style="border-color:var(--series-2);background:color-mix(in srgb,var(--series-2) 14%,transparent)"></i>Web search / celebrity-site scrape</span>
+      <span><i class="sw" style="border-color:var(--series-3);background:color-mix(in srgb,var(--series-3) 14%,transparent)"></i>Other origin (news, mugshots, official portraits, consented)</span>
+      <span><i class="sw" style="border-color:var(--neutral);background:color-mix(in srgb,var(--neutral) 14%,transparent)"></i>Text only</span>
+      <span><i class="ln"></i>Images taken from</span>
+      <span><i class="ln dash"></i>Partly taken from</span>
+      <span><i class="box-dash"></i>Withdrawn</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="card chart"><svg id="viz" viewBox="0 0 1100 1224" role="img" aria-labelledby="vizTitle"><title id="vizTitle">Lineage graph of face datasets grouped by upstream source</title></svg></div>
+    <aside class="card panel" id="panel" aria-live="polite">
+      <p class="hint">Select a dataset to see its terms, its parents and children, and links to its Notion row and primary source.<br><br>Datasets shown with no lines have no upstream source shared with any other dataset here.</p>
+    </aside>
+  </div>
+
+  <details class="card table">
+    <summary>Table view (34 entries plus Flickr)</summary>
+    <table id="tbl"><thead><tr><th>Dataset</th><th>Image origin</th><th>Built from</th><th>Status</th><th>Commercial use</th><th>Consent</th><th>Links</th></tr></thead><tbody></tbody></table>
+  </details>
+  <p class="foot">Sources: dataset pages and papers, Exposing.ai, and Peña et al. 2023, gathered in the Face Dataset Provenance Knowledge Base in Notion. Status of VGGFace is assumed, not verified.</p>
+</div>
+
+<script>
+const N = 'https://app.notion.com/p/';
+const W = 168, H = 46;
+const ORIGIN = {
+  flickr: { label: 'Flickr (Creative Commons)', v: '--series-1' },
+  web: { label: 'Web search / celebrity-site scrape', v: '--series-2' },
+  other: { label: 'Other origin', v: '--series-3' },
+  text: { label: 'Text only', v: '--neutral' }
+};
+const D = [
+  { id:'flickr', name:'Flickr.com', full:'Photo-sharing platform', x:40, y:100, o:'flickr', st:'Platform', sub:'Source platform', terms:'Per-photo licence chosen by uploader; ~2.3% of Flickr is CC-licensed.', com:'Varies per photo', con:'None', url:'https://www.flickr.com/creativecommons' },
+  { id:'yfcc', name:'YFCC100M', full:'Yahoo Flickr Creative Commons 100M', x:250, y:60, o:'flickr', st:'Available', terms:'URLs + licence metadata; billed as "free and legal to use". Only ~31.8% of photos allow commercial use.', com:'Unclear', con:'None', n:'40ef1b1e696581cda328eb7011652de1', url:'https://code.flickr.net/2014/10/15/the-ins-and-outs-of-the-yahoo-flickr-100-million-creative-commons-dataset/' },
+  { id:'ffhq', name:'FFHQ', full:'Flickr-Faces-HQ (NVIDIA)', x:250, y:150, o:'flickr', st:'Available', terms:'CC BY-NC-SA 4.0 compilation; per-image CC BY / BY-NC / CC0 / PD recorded in metadata; no NoDerivs images.', com:'Non-commercial only', con:'Opt-out only', n:'40ef1b1e696581db9ed8de2f37c8a918', url:'https://github.com/NVlabs/ffhq-dataset' },
+  { id:'mega', name:'MegaFace', full:'MegaFace MF2 (Univ. of Washington)', x:470, y:30, o:'flickr', st:'Withdrawn', terms:'Non-commercial research; researcher indemnifies UW. 69% of photos bar commercial use. Decommissioned June 2020.', com:'Non-commercial only', con:'None', n:'40ef1b1e696581be8b62cd1ef0e43493', url:'http://megaface.cs.washington.edu/dataset/download_training.html' },
+  { id:'fairface', name:'FairFace', full:'FairFace (UCLA)', x:470, y:95, o:'flickr', st:'Available', terms:'CC BY 4.0 label. Paper says only CC BY / BY-SA Flickr images, but also some Twitter and news photos.', com:'Allowed (label)', con:'None', n:'40ef1b1e69658103a8dcfef373f80062', url:'https://github.com/joojs/fairface' },
+  { id:'dif', name:'Diversity in Faces', full:'IBM Diversity in Faces (DiF)', x:470, y:160, o:'flickr', st:'Withdrawn', terms:'No longer downloadable. Subject of 2020 BIPA lawsuits (dismissed on jurisdiction or settled).', com:'Unclear', con:'None', n:'40ef1b1e69658144b7dcd07f548a078c', url:'https://www.insideprivacy.com/data-privacy/what-the-diversity-in-faces-litigation-means-for-biometric-technologies/' },
+  { id:'dive', name:'DiveFace', full:'DiveFace (BiDA Lab, UAM)', x:690, y:30, o:'flickr', st:'Parent withdrawn', terms:'Non-commercial research for any modification or redistribution. Mostly CC BY-NC-ND images. Ships only lists + a MegaFace rebuild script.', com:'Non-commercial only', con:'None', n:'40ef1b1e696581fda3f3d369144e400f', url:'https://github.com/BiDAlab/DiveFace' },
+  { id:'bios', name:'Bias in Bios', full:'Common Crawl Bios (De-Arteaga et al.)', x:690, y:110, o:'text', st:'Available', sub:'Text only · bios', terms:'~400K biographies scraped from Common Crawl. Terms not checked.', com:'Unclear', con:'None', n:'40ef1b1e69658151adeae392cf0b45d0' },
+  { id:'faircv', name:'FairCVdb', full:'FairCVdb (FairCVtest)', x:910, y:70, o:'flickr', st:'Parent withdrawn', terms:'Warranty disclaimer only; no rights granted. Faces from DiveFace (may be embeddings + image list, not pixels); bios from Bias in Bios.', com:'Non-commercial only', con:'None', n:'40ef1b1e6965813081c8f337f351ae27', url:'https://github.com/BiDAlab/FairCVtest' },
+
+  { id:'msceleb', name:'MS-Celeb-1M', full:'Microsoft Celeb 1M', x:250, y:275, o:'web', st:'Withdrawn', terms:'~10M search-engine images of ~100K people. Taken offline June 2019; copies persist.', com:'Unclear', con:'None', n:'40ef1b1e696581018c0acdce20a5291c', url:'https://www.vice.com/en/article/microsoft-deleted-a-facial-recognition-database-but-its-not-dead/' },
+  { id:'rfw', name:'RFW', full:'Racial Faces in-the-Wild', x:470, y:250, o:'web', st:'Parent withdrawn', terms:'Non-commercial research; no reproduction or redistribution; apply from an institutional email. Copies only LFW\'s pair protocol.', com:'Non-commercial only', con:'None', n:'40ef1b1e6965814b8f43c91ca0e87bcc', url:'http://whdeng.cn/RFW/testing.html' },
+  { id:'bupt', name:'BUPT-Balanced/Global', full:'BUPT-Balancedface & BUPT-Globalface', x:470, y:310, o:'web', st:'Parent withdrawn', terms:'Ethnicity-aware training sets (1.3M and 2M images). Terms not checked.', com:'Unclear', con:'None', n:'40ef1b1e69658140acdcebb4aeceb765' },
+
+  { id:'casia', name:'CASIA-WebFace', full:'CASIA-WebFace', x:250, y:395, o:'web', st:'Available', terms:'Released "for training purposes only". Terms and current status not checked.', com:'Unclear', con:'None', n:'40ef1b1e696581fd9751c716873373af' },
+  { id:'vggface', name:'VGGFace', full:'VGG Face (Oxford)', x:250, y:450, o:'web', st:'Withdrawn', sub:'⊘ Withdrawn (assumed)', terms:'2.6M web images of 2,622 people. Status assumed withdrawn alongside VGGFace2; not verified.', com:'Unclear', con:'None', n:'40ef1b1e6965812eb0b2d0d70069e7e0' },
+  { id:'vgg2', name:'VGGFace2', full:'VGGFace2 (Oxford)', x:250, y:505, o:'web', st:'Withdrawn', terms:'3.31M Google Image Search results of 9,131 public figures. Oxford download links removed.', com:'Unclear', con:'None', n:'40ef1b1e6965810fab9bd19fe3818d8c', url:'https://www.robots.ox.ac.uk/~vgg/data/vgg_face2/' },
+  { id:'demog', name:'DemogPairs', full:'DemogPairs (Hupont & Fernández)', x:470, y:440, o:'web', st:'Parent withdrawn', terms:'10,800 images of 600 people in 6 balanced groups. Terms not checked.', com:'Unclear', con:'None', n:'40ef1b1e696581f59badc36c8604bac5' },
+  { id:'bfw', name:'BFW', full:'Balanced Faces in the Wild', x:470, y:505, o:'web', st:'Parent withdrawn', terms:'Listed CC BY 4.0 on IEEE DataPort, but images are VGGFace2 Google Image Search results the authors don\'t own.', com:'Allowed (label)', con:'None', n:'40ef1b1e696581d98d01d7c2fdfd3649', url:'https://ieee-dataport.org/documents/balanced-faces-wild' },
+
+  { id:'news', name:'Names & Faces in News', full:'Yahoo! News captioned photos (Berg et al.)', x:250, y:750, o:'other', st:'Available', sub:'News photos', terms:'~500K captioned press photos (2003–04). Agencies keep copyright. Terms not checked.', com:'Unclear', con:'None', n:'40ef1b1e696581978313ccdd404716e1', url:'https://adam.harvey.studio/origins-and-endpoints/' },
+  { id:'lfw', name:'LFW', full:'Labeled Faces in the Wild', x:470, y:750, o:'other', st:'Available', terms:'No licence ever issued. A 2019 disclaimer (no legal force) warns against concluding commercial suitability.', com:'Unclear', con:'None', n:'40ef1b1e69658144ad77dd93d740d4b6', url:'https://arxiv.org/html/2108.02922v2' },
+  { id:'lfwa', name:'LFWA / LFWA+', full:'LFW Attributes (Liu et al., CUHK)', x:690, y:590, o:'other', st:'Available', sub:'Adds gender & race labels', terms:'LFW images with attribute labels, released alongside CelebA. FairFace used LFWA+ as a comparison set with gender and merged race labels. Terms not checked.', com:'Unclear', con:'None', n:'40ef1b1e696581ab8e4bc4cdff7ad9f3', url:'https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html' },
+  { id:'lfwplus', name:'LFW+', full:'LFW+ (Han & Jain, Michigan State)', x:690, y:643, o:'other', st:'Available', sub:'Age, gender, race · NC', terms:'About 15K images (LFW plus additions) with age, gender and race labels. Adds a non-commercial clause LFW itself never had.', com:'Non-commercial only', con:'None', n:'40ef1b1e696581948487c6cde54e77c2', url:'https://www.researchgate.net/publication/263697688_Age_Gender_and_Race_Estimation_from_Unconstrained_Face_Images' },
+  { id:'mtfl', name:'MTFL', full:'Multi-Task Facial Landmark dataset', x:690, y:696, o:'other', st:'Available', sub:'Landmarks + gender', terms:'Includes original LFW images with landmarks and attribute labels. Terms not checked.', com:'Unclear', con:'None', n:'40ef1b1e6965811c9094e3600c473cf1' },
+  { id:'smfrd', name:'SMFRD', full:'Simulated Masked Face Recognition Dataset', x:690, y:749, o:'other', st:'Available', sub:'Edited faces · shared', terms:'LFW faces edited with synthetic masks and redistributed publicly, with no non-commercial clause. This is the "share edited real faces" case.', com:'Unclear', con:'None', n:'40ef1b1e696581efb861cef9feb4c853' },
+  { id:'itwe', name:'ITWE', full:'ITWE (LFW derivative D36 in Peng et al.)', x:690, y:802, o:'other', st:'Available', sub:'Available · NC', terms:'Includes original LFW images; carries a non-commercial clause. Purpose not verified.', com:'Non-commercial only', con:'None', n:'40ef1b1e6965815181e5f741e56a91d3' },
+  { id:'lfwvar', name:'Aligned / 3D variants (6)', full:'LFW-a, funneled, deep funneled, crop, LFW3D, Frontalized Faces in the Wild', x:690, y:855, o:'other', st:'Available', sub:'Re-processed images', terms:'Six datasets that align, crop or 3D-frontalize LFW images and redistribute them. No licence at any layer.', com:'Unclear', con:'None', n:'40ef1b1e69658152a214ca09eedbe665', url:'https://arxiv.org/html/2108.02922v2' },
+  { id:'lfwother', name:'Other derivatives (9)', full:'BLUFR, LFW87, Extended LFW, PubFig83+LFW, five unnamed', x:690, y:908, o:'other', st:'Available', sub:'Mostly unlicensed', terms:'BLUFR is a protocol with no images. PubFig83+LFW mixes in PubFig, which is non-commercial and URL-only. Two unnamed sets add sensitive labels; one prohibits commercial use.', com:'Unclear', con:'None', n:'40ef1b1e6965813ebdbcfc30f6868c41', url:'https://arxiv.org/html/2108.02922v2' },
+
+  { id:'imdb', name:'IMDB-WIKI', full:'IMDB-WIKI (ETH Zurich)', x:250, y:995, o:'web', st:'Available', terms:'~523K images crawled from IMDb and Wikipedia profiles. No licence on download page.', com:'Unclear', con:'None', n:'40ef1b1e69658123a5ede3a2fa8cb9df', url:'https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/' },
+  { id:'cimdb', name:'Cleaned IMDB', full:'Cleaned IMDB subset (Alvi et al.)', x:470, y:995, o:'web', st:'Available', terms:'Lists only (60K age, 80K gender). Requires IMDB-WIKI images. No terms stated.', com:'Unclear', con:'None', n:'40ef1b1e696581168e58ef9759785596', url:'https://www.robots.ox.ac.uk/~vgg/data/laofiw/' },
+  { id:'morph', name:'MORPH-II', full:'MORPH Album 2 (UNC Wilmington)', x:250, y:1055, o:'other', st:'On request', sub:'Mugshot-style · NC', terms:'Non-commercial academic release, separate from commercial edition. 65% African-American men.', com:'Non-commercial only', con:'None', n:'40ef1b1e6965815d96e0d4dd06e38c8d' },
+  { id:'utk', name:'UTKFace', full:'UTKFace (Univ. of Tennessee)', x:470, y:1055, o:'web', st:'Available', terms:'Non-commercial research only. Images "collected from the Internet"; per FairFace paper, from MORPH, CACD and web search. Untraceable per image.', com:'Non-commercial only', con:'None', n:'40ef1b1e6965815e96e2fdcd59b64da6', url:'https://susanqq.github.io/UTKFace/' },
+
+  { id:'celeba', name:'CelebA', full:'CelebFaces Attributes (CUHK)', x:40, y:845, o:'web', st:'Available', terms:'Non-commercial research; no copying or distributing any portion of images or derived data.', com:'Non-commercial only', con:'None', n:'40ef1b1e69658155af11e09dd265fb9d', url:'https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html' },
+  { id:'laofiw', name:'LAOFIW', full:'Labeled Ancestral Origin Faces in the Wild', x:250, y:845, o:'web', st:'Withdrawn', terms:'Bing Image Search with 43 nationality keywords. Privacy notice only; download links removed. Only 143 images traced to Flickr.', com:'Unclear', con:'None', n:'40ef1b1e69658136a373eccb115304b7', url:'https://www.robots.ox.ac.uk/~vgg/data/laofiw/' },
+  { id:'ppb', name:'PPB', full:'Pilot Parliaments Benchmark', x:470, y:845, o:'other', st:'On request', sub:'Official portraits', terms:'1,270 parliamentary portraits from 6 countries. Dataset terms unconfirmed (project page CC BY-NC-ND 4.0).', com:'Unclear', con:'None', n:'40ef1b1e696581c29569f85ce12eb307', url:'https://www.media.mit.edu/projects/gender-shades/overview/' },
+  { id:'fhibe', name:'FHIBE', full:'Sony Fair Human-Centric Image Benchmark', x:690, y:845, o:'other', st:'Available', sub:'✓ Consented · eval only', terms:'Evaluation only (plus training bias mitigation). Paid, revocable consent. Hosted by Mozilla Data Collective.', com:'Evaluation only', con:'Informed and revocable', n:'40ef1b1e6965815190ace28be6acd285', url:'https://fairnessbenchmark.ai.sony/data-card/fhibe-datasheet' },
+  { id:'ccv2', name:'Casual Conv. v2', full:'Meta Casual Conversations v2', x:910, y:845, o:'other', st:'Available', sub:'✓ Consented · video', terms:'Paid participants; limited licence, evaluation plus training on certain labels.', com:'Evaluation only', con:'Informed and revocable', n:'40ef1b1e696581908514fa8ddd09eefc', url:'https://ai.meta.com/datasets/casual-conversations-v2-dataset/' }
+];
+const E = [
+  ['flickr','yfcc'],['flickr','ffhq'],['yfcc','mega'],['yfcc','fairface'],['yfcc','dif'],
+  ['mega','dive'],['dive','faircv'],['bios','faircv'],
+  ['msceleb','rfw'],['msceleb','bupt'],
+  ['casia','demog'],['vggface','demog'],['vgg2','demog'],['vgg2','bfw'],
+  ['news','lfw'],['lfw','lfwa'],['lfw','lfwplus'],['lfw','mtfl'],['lfw','smfrd'],['lfw','itwe'],['lfw','lfwvar'],['lfw','lfwother'],['imdb','cimdb'],['morph','utk',true]
+];
+const LANES = [
+  { y:15, h:200, label:'Flickr / YFCC100M family', lx:40, ly:40 },
+  { y:235, h:135, label:'MS-Celeb-1M family', lx:40, ly:302 },
+  { y:385, h:180, label:'VGG / CASIA family', lx:40, ly:475 },
+  { y:580, h:385, label:'News photos & LFW derivatives', lx:40, ly:600 },
+  { y:980, h:135, label:'Celebrity profiles & mugshots', lx:40, ly:1052 },
+  { y:1132, h:82, label:'No shared upstream', lx:40, ly:1148 }
+];
+
+const byId = Object.fromEntries(D.map(d => [d.id, d]));
+const parents = {}, children = {};
+D.forEach(d => { parents[d.id] = []; children[d.id] = []; });
+E.forEach(([a,b,p]) => { parents[b].push({ id:a, p }); children[a].push({ id:b, p }); });
+
+const svgNS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('viz');
+const css = getComputedStyle(document.querySelector('.viz-root'));
+const el = (t, a, parent = svg) => { const e = document.createElementNS(svgNS, t); for (const k in a) e.setAttribute(k, a[k]); parent.appendChild(e); return e; };
+
+const defs = el('defs', {});
+const mk = el('marker', { id:'arr', viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse' }, defs);
+el('path', { d:'M0,0 L10,5 L0,10 z', fill:'var(--muted)' }, mk);
+
+LANES.forEach(l => {
+  el('rect', { class:'lane-band', x:10, y:l.y, width:1080, height:l.h, rx:10 });
+  const t = el('text', { class:'lane-label', x:l.lx + (l.label === 'No shared upstream' ? 0 : 0), y: l.label === 'Flickr / YFCC100M family' || l.label === 'No shared upstream' ? l.y + 18 : l.ly });
+  t.textContent = l.label;
+});
+// keep the bottom-lane label from colliding with its nodes
+svg.querySelectorAll('.lane-label')[5].setAttribute('y', 1148);
+byId.celeba.y = 1160; byId.laofiw.y = 1160; byId.ppb.y = 1160; byId.fhibe.y = 1160; byId.ccv2.y = 1160;
+byId.celeba.x = 40;
+
+const edgeEls = [];
+E.forEach(([a,b,p]) => {
+  const s = byId[a], t = byId[b];
+  const x1 = s.x + W, y1 = s.y + H/2, x2 = t.x - 2, y2 = t.y + H/2, dx = (x2 - x1) / 2;
+  const path = el('path', { class:'edge' + (p ? ' partial' : ''), d:`M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`, 'marker-end':'url(#arr)' });
+  path.dataset.a = a; path.dataset.b = b;
+  edgeEls.push(path);
+  if (p) {
+    const lb = el('text', { class:'edge-label', x:(x1+x2)/2, y:(y1+y2)/2 - 5, 'text-anchor':'middle' });
+    lb.textContent = 'partly'; lb.dataset.a = a; lb.dataset.b = b; edgeEls.push(lb);
+  }
+});
+
+const subFor = d => d.sub || ({ 'Withdrawn':'⊘ Withdrawn', 'Parent withdrawn':'⚠ Parent withdrawn', 'On request':'On request', 'Available':'Available' }[d.st] || d.st) + (d.com === 'Non-commercial only' ? ' · NC' : d.com === 'Allowed (label)' ? ' · CC BY label' : '');
+
+const nodeEls = {};
+D.forEach(d => {
+  const c = css.getPropertyValue(ORIGIN[d.o].v).trim();
+  const g = el('g', { class:'node' + (d.st === 'Withdrawn' ? ' withdrawn' : ''), tabindex:'0', role:'button', 'aria-label':`${d.name}: ${ORIGIN[d.o].label}, ${d.st}` , transform:`translate(${d.x},${d.y})` });
+  el('rect', { class:'hit', x:-6, y:-6, width:W+12, height:H+12, rx:10 }, g);
+  el('rect', { class:'body', width:W, height:H, rx:6, fill:`color-mix(in srgb, ${c} 13%, var(--surface-1))`, stroke:c }, g);
+  const n = el('text', { class:'name', x:11, y:19 }, g); n.textContent = d.name;
+  const s = el('text', { class:'sub', x:11, y:35 }, g); s.textContent = subFor(d);
+  nodeEls[d.id] = g;
+  const enter = () => { if (!pinned) focusNode(d.id); };
+  g.addEventListener('mouseenter', enter);
+  g.addEventListener('focus', () => focusNode(d.id));
+  g.addEventListener('mouseleave', () => { if (!pinned) clearFocus(); });
+  g.addEventListener('click', e => { e.stopPropagation(); pin(d.id); });
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pin(d.id); } if (e.key === 'Escape') { pinned = null; clearFocus(); } });
+});
+svg.addEventListener('click', () => { pinned = null; clearFocus(); });
+
+const walk = (id, map, acc = new Set()) => { map[id].forEach(r => { if (!acc.has(r.id)) { acc.add(r.id); walk(r.id, map, acc); } }); return acc; };
+let pinned = null;
+function lineage(id) { const up = walk(id, parents), down = walk(id, children); return new Set([id, ...up, ...down]); }
+function focusNode(id) {
+  const keep = lineage(id);
+  svg.classList.add('focusing');
+  for (const k in nodeEls) nodeEls[k].classList.toggle('dim', !keep.has(k));
+  edgeEls.forEach(e => { const on = keep.has(e.dataset.a) && keep.has(e.dataset.b); e.classList.toggle('dim', !on); e.classList.toggle('on', on); });
+  renderPanel(id, keep);
+}
+function clearFocus() {
+  svg.classList.remove('focusing');
+  for (const k in nodeEls) nodeEls[k].classList.remove('dim', 'pinned');
+  edgeEls.forEach(e => e.classList.remove('dim', 'on'));
+}
+function pin(id) {
+  pinned = pinned === id ? null : id;
+  for (const k in nodeEls) nodeEls[k].classList.toggle('pinned', k === pinned);
+  if (pinned) focusNode(id); else clearFocus();
+}
+
+const panel = document.getElementById('panel');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+function chainUp(id) {
+  // longest path back to a root, for the "provenance chain" line
+  const ps = parents[id]; if (!ps.length) return [id];
+  let best = []; ps.forEach(p => { const c = chainUp(p.id); if (c.length > best.length) best = c; });
+  return [...best, id];
+}
+function renderPanel(id) {
+  const d = byId[id], c = css.getPropertyValue(ORIGIN[d.o].v).trim();
+  const ps = parents[id].map(p => byId[p.id].name + (p.p ? ' (partly)' : ''));
+  const cs = [...walk(id, children)].map(k => byId[k].name);
+  const chain = chainUp(id);
+  panel.innerHTML = `
+    <h2>${esc(d.name)}</h2><p class="full">${esc(d.full)}</p>
+    <span class="chip"><i style="background:${c}"></i>${esc(ORIGIN[d.o].label)}</span>
+    <span class="chip">${d.st === 'Withdrawn' ? '⊘ ' : d.st === 'Parent withdrawn' ? '⚠ ' : ''}${esc(d.st)}</span>
+    <div class="k">Terms and image rights</div><p>${esc(d.terms)}</p>
+    <div class="k">Commercial use · Consent</div><p>${esc(d.com)} · ${esc(d.con)}</p>
+    ${chain.length > 1 ? `<div class="k">Provenance chain</div><p class="chain">${chain.map(k => esc(byId[k].name)).join(' → ')}</p>` : ''}
+    <div class="k">Built from</div><p>${ps.length ? esc(ps.join(', ')) : 'No upstream dataset in this map'}</p>
+    <div class="k">Downstream</div><p>${cs.length ? esc(cs.join(', ')) : 'None in this map'}</p>
+    <div class="links">${d.n ? `<a href="${N + d.n}" target="_blank" rel="noopener">Open in Notion ↗</a>` : ''}${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Primary source ↗</a>` : ''}</div>`;
+}
+
+const tb = document.querySelector('#tbl tbody');
+D.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><b>${esc(d.name)}</b><br><span style="color:var(--text-secondary)">${esc(d.full)}</span></td><td>${esc(ORIGIN[d.o].label)}</td><td>${parents[d.id].map(p => esc(byId[p.id].name + (p.p ? ' (partly)' : ''))).join(', ') || '—'}</td><td>${esc(d.st)}</td><td>${esc(d.com)}</td><td>${esc(d.con)}</td><td>${d.n ? `<a href="${N + d.n}" target="_blank" rel="noopener">Notion</a>` : ''}${d.n && d.url ? ' · ' : ''}${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">Source</a>` : ''}</td>`;
+  tb.appendChild(tr);
+});
+</script>
+</body>
+</html>
