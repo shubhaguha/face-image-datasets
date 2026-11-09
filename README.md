@@ -1,3 +1,7 @@
+# Face image datasets
+
+Interactive lineage map of face image datasets: **[view it live](https://shubhaguha.github.io/face-image-datasets/)**
+
 If you want to change it:
 
 - Add a dataset: add an object to the D array with an id, a name, x/y coordinates (columns sit at x = 40, 250, 470, 690 and 910), an origin o (flickr, web, other or text), a status st and the detail fields. Then add ['parentId','childId'] to E. Put true as a third item for a "partly from" line.
