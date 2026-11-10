@@ -98,7 +98,7 @@ td a { color: var(--series-1); }
 <div class="viz-root">
   <header>
     <h1>Shared provenance of face datasets</h1>
-    <p class="lede">Each line shows where a dataset's <b>images</b> came from. 21 of the 34 entries take their images from another dataset, and LFW alone has <b>20 known derivatives</b>, shown here as 5 individual datasets and 2 groups. <b>Six datasets have been withdrawn (dashed borders), and derivatives of four of those are still distributed.</b> RFW, BFW and LAOFIW take only their names from LFW: none of them contains LFW images. Hover or tap a dataset to trace its lineage.</p>
+    <p class="lede">Each line shows where a dataset's <b>images</b> came from. 21 of the 35 entries take their images from another dataset, and LFW alone has <b>20 known derivatives</b>, shown here as 5 individual datasets and 2 groups. <b>Six datasets have been withdrawn (dashed borders), and derivatives of four of those are still distributed.</b> RFW, BFW and LAOFIW take only their names from LFW: none of them contains LFW images. Hover or tap a dataset to trace its lineage.</p>
     <div class="legend" aria-label="Legend">
       <span><i class="sw" style="border-color:var(--series-1);background:color-mix(in srgb,var(--series-1) 14%,transparent)"></i>Flickr (Creative Commons)</span>
       <span><i class="sw" style="border-color:var(--series-2);background:color-mix(in srgb,var(--series-2) 14%,transparent)"></i>Web search / celebrity-site scrape</span>
@@ -111,14 +111,14 @@ td a { color: var(--series-1); }
   </header>
 
   <div class="layout">
-    <div class="card chart"><svg id="viz" viewBox="0 0 1100 1224" role="img" aria-labelledby="vizTitle"><title id="vizTitle">Lineage graph of face datasets grouped by upstream source</title></svg></div>
+    <div class="card chart"><svg id="viz" viewBox="0 0 1100 1279" role="img" aria-labelledby="vizTitle"><title id="vizTitle">Lineage graph of face datasets grouped by upstream source</title></svg></div>
     <aside class="card panel" id="panel" aria-live="polite">
       <p class="hint">Select a dataset to see its terms, its parents and children, and links to its Notion row and primary source.<br><br>Datasets shown with no lines have no upstream source shared with any other dataset here.</p>
     </aside>
   </div>
 
   <details class="card table">
-    <summary>Table view (34 entries plus Flickr)</summary>
+    <summary>Table view (35 entries plus Flickr)</summary>
     <table id="tbl"><thead><tr><th>Dataset</th><th>Image origin</th><th>Built from</th><th>Status</th><th>Commercial use</th><th>Consent</th><th>Links</th></tr></thead><tbody></tbody></table>
   </details>
   <p class="foot">Sources: dataset pages and papers, Exposing.ai, and Peña et al. 2023, gathered in the Face Dataset Provenance Knowledge Base in Notion. Status of VGGFace is assumed, not verified.</p>
@@ -173,7 +173,8 @@ const D = [
   { id:'laofiw', name:'LAOFIW', full:'Labeled Ancestral Origin Faces in the Wild', x:250, y:845, o:'web', st:'Withdrawn', terms:'Bing Image Search with 43 nationality keywords. Privacy notice only; download links removed. Only 143 images traced to Flickr.', com:'Unclear', con:'None', n:'40ef1b1e69658136a373eccb115304b7', url:'https://www.robots.ox.ac.uk/~vgg/data/laofiw/' },
   { id:'ppb', name:'PPB', full:'Pilot Parliaments Benchmark', x:470, y:845, o:'other', st:'On request', sub:'Official portraits', terms:'1,270 parliamentary portraits from 6 countries. Dataset terms unconfirmed (project page CC BY-NC-ND 4.0).', com:'Unclear', con:'None', n:'40ef1b1e696581c29569f85ce12eb307', url:'https://www.media.mit.edu/projects/gender-shades/overview/' },
   { id:'fhibe', name:'FHIBE', full:'Sony Fair Human-Centric Image Benchmark', x:690, y:845, o:'other', st:'Available', sub:'✓ Consented · eval only', terms:'10,318 images of 1,981 paid, consenting people from 81 countries (Xiang et al., Nature 2025). Terms of use: fairness/bias evaluation and mitigation only; no training except bias detection or mitigation methods; no race or gender classifiers; no re-identification. Account + terms required. Now hosted by Mozilla Data Collective, which handles consent revocation; old versions must be deleted.', com:'Evaluation only', con:'Informed and revocable', n:'40ef1b1e6965815190ace28be6acd285', url:'https://fairnessbenchmark.ai.sony/data-card/fhibe-datasheet' },
-  { id:'ccv2', name:'Casual Conv. v2', full:'Meta Casual Conversations v2', x:910, y:845, o:'other', st:'Available', sub:'✓ Consented · video', terms:'Paid participants; limited licence, evaluation plus training on certain labels.', com:'Evaluation only', con:'Informed and revocable', n:'40ef1b1e696581908514fa8ddd09eefc', url:'https://ai.meta.com/datasets/casual-conversations-v2-dataset/' }
+  { id:'ccv2', name:'Casual Conv. v2', full:'Meta Casual Conversations v2', x:910, y:845, o:'other', st:'Available', sub:'✓ Consented · video', terms:'Paid participants; limited licence, evaluation plus training on certain labels.', com:'Evaluation only', con:'Informed and revocable', n:'40ef1b1e696581908514fa8ddd09eefc', url:'https://ai.meta.com/datasets/casual-conversations-v2-dataset/' },
+  { id:'cfd', name:'Chicago Face Database', full:'Chicago Face Database (Univ. of Chicago): CFD, CFD-MR, CFD-INDIA', x:40, y:1215, o:'other', st:'On request', sub:'Studio photos · NC', terms:'Standardized high-resolution photos of ~827 people aged 17–65: CFD (597, self-identified Asian, Black, Latino or White), CFD-MR (88 multiracial) and CFD-INDIA (142, recruited in Delhi). Non-commercial scientific research only; no redistribution, including to cloud AI image tools; no identifying or contacting models, including by face recognition; at most four images in publications without permission. Download link emailed on request.', com:'Non-commercial only', con:'Not stated on site', url:'https://www.chicagofaces.org/' }
 ];
 const E = [
   ['flickr','yfcc'],['flickr','ffhq'],['yfcc','mega'],['yfcc','fairface'],['yfcc','dif'],
@@ -188,7 +189,7 @@ const LANES = [
   { y:385, h:180, label:'VGG / CASIA family', lx:40, ly:475 },
   { y:580, h:385, label:'News photos & LFW derivatives', lx:40, ly:600 },
   { y:980, h:135, label:'Celebrity profiles & mugshots', lx:40, ly:1052 },
-  { y:1132, h:82, label:'No shared upstream', lx:40, ly:1148 }
+  { y:1132, h:137, label:'No shared upstream', lx:40, ly:1148 }
 ];
 
 const byId = Object.fromEntries(D.map(d => [d.id, d]));
@@ -213,7 +214,7 @@ LANES.forEach(l => {
 // keep the bottom-lane label from colliding with its nodes
 svg.querySelectorAll('.lane-label')[5].setAttribute('y', 1148);
 byId.celeba.y = 1160; byId.laofiw.y = 1160; byId.ppb.y = 1160; byId.fhibe.y = 1160; byId.ccv2.y = 1160;
-byId.celeba.x = 40;
+byId.celeba.x = 40; byId.cfd.y = 1215;
 
 const edgeEls = [];
 E.forEach(([a,b,p]) => {
